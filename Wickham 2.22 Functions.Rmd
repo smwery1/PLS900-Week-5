@@ -1,0 +1,227 @@
+---
+title: 'Wickham Exercises: Functions'
+author: "Elizabeth Brannon, Kesicia Dickinson, Shane Wery"
+date: "2/21/2018"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+##Functions
+
+#1. What function allows you to tell if an object is a function? What function allows you to tell if a function is a primitive function?
+
+We could use str() or is.function to tell us if its a function. Similarly, we can use is.primitive to tell if it is a primitive function. 
+
+#2. This code makes a list of all functions in the base package. Use it to answer the following questions:
+
+```{r exercise 1.2}
+objs <- mget(ls("package:base"), inherits = TRUE)
+funs <- Filter(is.function, objs)
+```
+
+#a Which base function has the most arguments?
+```{r exercise 1.2.a}
+
+require(plyr)
+
+funclength <- laply(funs, function(x)(length(formals(x)))) #creates the length of the function for the lists
+
+funclength[which(funclength == max(funclength))] #tells us which length is longest
+
+```
+
+
+#b How many base functions have no arguments? What’s special about those functions?
+```{r exercise 1.2.b}
+length(funclength[which(funclength == 0)])
+
+```
+
+#c How could you adapt the code to find all primitive functions?
+```{r exercise 1.2.c}
+
+primfunc <- Filter(is.primitive, objs)
+primfunc
+```
+
+#3. What are the three important components of a function?
+
+The three important components are the body(), formals(), and environment(). 
+
+#4. When does printing a function not show what environment it was created in?
+
+Printing a function does not show what environment it is a primitive function. It will return null. 
+
+##Lexical Scoping
+
+#1. What does the following code return? Why? What does each of the three c’s mean?
+```{r exercise 2.1}
+c <- 10
+c(c = c)
+```
+The first c is being assigned to 10. In the second line, the first c is concatnating the values, then the inside is assigning value to the vector, recreating the value of the new c as the value of the first original c in line one as 10. 
+
+#2. What are the four principles that govern how R looks for values?
+The four principles are name masking, functions vs. variables, a fresh start, and dynamic lookup. 
+
+#.3 What does the following function return? Make a prediction before running the code yourself.
+The function will run through each line in order, first doing 10^2, then adding 1 to that value (100+1), then multiplying 101 by 2, getting 202. 
+```{r exercise 2.3}
+f <- function(x) {
+  f <- function(x) {
+    f <- function(x) {
+      x ^ 2
+    }
+    f(x) + 1
+  }
+  f(x) * 2
+}
+f(10)
+```
+
+
+##Function Arguments
+
+#1. Clarify the following list of odd function calls:
+
+```{r exercise 3.1}
+x <- sample(replace = TRUE, 20, x = c(1:10, NA))
+y <- runif(min = 0, max = 1, 20)
+cor(m = "k", y = y, u = "p", x = x)
+cor?
+```
+x is saying to take a sample of 20 values that includes 1 to 10 and the rest NAs. y is saying to run values from the sample that range from 0 to 1 and include 20 values totaly. For cor, m is referring to the method where "k" = "kendall", x and y are referring to the operators above, and u is referring to the use, where "p" equals "pairwise".
+
+#2. What does this function return? Why? Which principle does it illustrate?
+
+```{r exercise 3.2}
+f1 <- function(x = {y <- 1; 2}, y = 0) {
+  x + y
+}
+f1()
+```
+The function returns three. This is because we first assign x to 2 and y to 1, which r will pull before it pulls 0. 
+
+#3. What does this function return? Why? Which principle does it illustrate?
+
+```{r exercise 3.3}
+f2 <- function(x = z) {
+  z <- 100
+  x
+}
+f2()
+```
+This returns 100, for a similar reason as above. r will first pull the function that has been assigned to z, rather using the emtpy value given to x. This is name masking. 
+
+##Special Calls
+
+#1. Create a list of all the replacement functions found in the base package. Which ones are primitive functions?
+
+```{r exercise 4.1}
+require(plyr)
+library(plyr)
+objs <- mget(ls("package:base"), inherits = TRUE)
+prims <- Filter(is.primitive, objs)
+
+replacfunc <- lapply(funs, is.primitive)
+names(replacfunc)
+
+```
+
+#2. What are valid names for user-created infix functions?
+You use %% to create infix functions. Anything surrounded by %% will be an infix function. 
+
+#3. Create an infix xor() operator.
+```{r 4.3}
+`%xor%` <- function(x,y){
+  (x|y)
+}
+
+x %xor% y
+
+```
+
+
+#4. Create infix versions of the set functions intersect(), union(), and setdiff().
+
+```{r exercise 4.4}
+x1 <- seq(1:10)
+y1 <- seq(5:15)
+
+
+`%intersec%` <- function(x1, y1)
+{
+  intersect(x1, y1)
+}
+x1 %intersect% y1
+
+`%union%` <- function(x1, y1)
+{
+  union(x, y)
+}
+x1 %union% y1
+
+`%setdiff%` <- function(x1, y1)
+{
+  setdiff(x1, y1)
+}
+x1 %setdiff% y1
+```
+
+
+#5. Create a replacement function that modifies a random location in a vector.
+
+```{r exercise 4.5}
+x <- seq(1:10)
+`randomsample` <- function(x, value) {
+  xlength <- 1:length(x)
+  place <- sample(xlength,1)
+  x[place] <- value
+  print(x)
+}
+randomsample(x)
+
+```
+
+
+##Return Calls
+
+
+#1. How does the chdir parameter of source() compare to in_dir()? Why might you prefer one approach to the other?
+They both allow you to edit the working directory by pulling out a specific source but not changing the working directory for the rest of your script. 
+
+#2. What function undoes the action of library()? How do you save and restore the values of options() and par()?
+You can use detach() to undue the library actions. Options() and par() both allow you to access the global environment. They work simpliarly to setwd().
+
+#3. Write a function that opens a graphics device, runs the supplied code, and closes the graphics device (always, regardless of whether or not the plotting code worked).
+```{r exercise 5.3}
+
+```
+
+#4. We can use on.exit() to implement a simple version of capture.output().
+
+```{r exercise 5.4}
+capture.output2 <- function(code) {
+  temp <- tempfile()
+  on.exit(file.remove(temp), add = TRUE)
+
+  sink(temp)
+  on.exit(sink(), add = TRUE)
+
+  force(code)
+  readLines(temp)
+}
+capture.output2(cat("a", "b", "c", sep = "\n"))
+
+body(capture.output)
+body(capture.output2)
+```
+
+Compare capture.output() to capture.output2(). How do the functions differ? What features have I removed to make the key ideas easier to see? How have I rewritten the key ideas to be easier to understand?
+
+From looking at the body of the functions, it is clear that capture.output2() is much shorter than capture.output() is. It removes many of the if else and for loops that the function was going through. 
